@@ -1,0 +1,18 @@
+{
+  "app_id": "",
+  "app_secret": "",
+  "short_lived_user_token": "",
+  "long_lived_user_token": "",
+  "page_id": "",
+  "page_access_token": "",
+  "default_message": "Hello from smsthaigold auto poster!",
+  "post_defaults": {
+    "link": "",
+    "published": true
+  },
+  "scheduler": {
+    "enabled": false,
+    "timezone": "Asia/Bangkok",
+    "jobs": []
+  }
+}

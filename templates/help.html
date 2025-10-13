@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <title>คู่มือการใช้งาน — Auto Fanpage Flask</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root{--bg:#f8f9fa;--card:#fff;--text:#111;--muted:#666;--border:#e5e7eb;--accent:#111}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0;background:var(--bg);color:var(--text);line-height:1.7}
+    header{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--border);padding:12px 16px}
+    header .wrap{max-width:960px;margin:0 auto;display:flex;gap:12px;align-items:center}
+    h1{font-size:20px;margin:0}
+    main{max-width:960px;margin:24px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+    nav.toc{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;margin:12px 0}
+    nav.toc a{display:block;color:#0366d6;text-decoration:none;padding:4px 0}
+    code{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:4px;padding:0 4px}
+    pre{background:#111;color:#eee;border-radius:8px;padding:12px;overflow:auto}
+    h2{margin:18px 0 8px}
+    h3{margin:16px 0 6px}
+    .muted{color:var(--muted)}
+    .btn{display:inline-block;background:var(--accent);color:#fff;border:1px solid var(--border);padding:8px 12px;border-radius:8px;text-decoration:none}
+  </style>
+  <meta name="description" content="คู่มือการใช้งานระบบ Auto Fanpage Flask: การตั้งค่า Facebook API, วิธีหา App ID/Secret, โทเค็นผู้ใช้/เพจ, การโพสต์ และตั้งเวลา">
+  <link rel="help" href="/help">
+  <link rel="index" href="/">
+  <meta name="robots" content="noindex">
+  <meta http-equiv="content-language" content="th">
+  <meta charset="utf-8">
+  </head>
+<body>
+  <header>
+    <div class="wrap">
+      <a class="btn" href="/">← กลับไปหน้าแดชบอร์ด</a>
+      <h1>คู่มือการใช้งาน — Auto Fanpage Flask</h1>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <p>หน้านี้เป็นคู่มือสรุปขั้นตอนสำคัญในการใช้งานระบบ โพสต์เพจ Facebook ผ่าน API และตั้งเวลา เพื่อให้เริ่มใช้งานได้อย่างรวดเร็ว</p>
+      <nav class="toc" aria-label="สารบัญ">
+        <strong>สารบัญ</strong>
+        <a href="#settings">1) ตั้งค่า (Settings)</a>
+        <a href="#find-credentials">2) วิธีหา App ID / App Secret / Short-Lived User Token / Long-Lived User Token / Page ID</a>
+        <a href="#posting">3) การโพสต์ข้อความ / วิดีโอ</a>
+        <a href="#scheduler">4) การตั้งเวลา (Scheduler)</a>
+        <a href="#troubleshooting">5) ปัญหาที่พบบ่อย</a>
+      </nav>
+
+      <section id="settings">
+        <h2>1) ตั้งค่า (Settings)</h2>
+        <p>ไปที่หน้าแดชบอร์ด <a href="/">/</a> แล้วกรอก:</p>
+        <ul>
+          <li><code>App ID</code> และ <code>App Secret</code></li>
+          <li><code>Short-Lived User Token</code> (โทเค็นผู้ใช้แบบสั้น)</li>
+          <li><code>Long-Lived User Token</code> (โทเค็นผู้ใช้แบบยาว) — สามารถกดปุ่ม “แลกเปลี่ยนโทเค็นแบบยาว” เพื่อแปลงจากแบบสั้น</li>
+          <li><code>Page ID</code> และ <code>Page Access Token</code> (ใช้ปุ่ม “รับโทเค็นเพจ” หลังมี Long-Lived User Token)</li>
+          <li>ค่าเริ่มต้นการโพสต์: ข้อความ, ลิงก์, และสถานะเผยแพร่</li>
+        </ul>
+        <p class="muted">คุณยังสามารถแก้ไขไฟล์ <code>settings.json</code> ได้โดยตรงที่โฟลเดอร์โปรเจกต์</p>
+      </section>
+
+      <section id="find-credentials">
+        <h2>2) วิธีหา App ID / App Secret / Tokens / Page ID</h2>
+        <h3>2.1 สร้างแอปและหา App ID / App Secret</h3>
+        <ol>
+          <li>ไปที่ <a href="https://developers.facebook.com/" target="_blank" rel="noopener">Facebook for Developers</a> แล้วเข้าสู่ระบบ</li>
+          <li>สร้างแอปใหม่ (ประเภทที่รองรับเพจ เช่น Business)</li>
+          <li>ในหน้าแอป ให้ไปที่เมนู Settings → Basic จะเห็น <code>App ID</code> และ <code>App Secret</code></li>
+        </ol>
+        <h3>2.2 สร้าง Short-Lived User Token</h3>
+        <ol>
+          <li>ไปที่ <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener">Graph API Explorer</a></li>
+          <li>เลือกแอปของคุณ จากนั้นคลิก “Generate Access Token”</li>
+          <li>ให้สิทธิ์ตามต้องการ (เช่น <code>pages_manage_posts</code>, <code>pages_read_engagement</code>, <code>pages_show_list</code>, <code>pages_read_user_content</code>)</li>
+          <li>คัดลอกโทเค็นที่ได้ไปใส่ในช่อง <code>Short-Lived User Token</code></li>
+        </ol>
+        <h3>2.3 แปลงเป็น Long-Lived User Token</h3>
+        <ul>
+          <li>วิธีง่าย: บนหน้าแดชบอร์ด กดปุ่ม “แลกเปลี่ยนโทเค็นแบบยาว” ระบบจะเรียก <code>/api/exchange_user_token</code> เพื่อแปลงให้</li>
+          <li>หรือใช้ API เอง: เรียก endpoint ของ Facebook OAuth ด้วย <code>client_id</code>, <code>client_secret</code>, และโทเค็นแบบสั้น</li>
+        </ul>
+        <h3>2.4 หา Page ID และ Page Access Token</h3>
+        <ol>
+          <li>เมื่อมี Long-Lived User Token แล้ว กด “โหลดเพจของฉัน” เพื่อดูรายการเพจ</li>
+          <li>ใส่ <code>Page ID</code> ของเพจที่ต้องการ</li>
+          <li>กด “รับโทเค็นเพจ” เพื่อให้ระบบเรียก <code>/api/page_token</code> และบันทึก <code>Page Access Token</code> ลง settings</li>
+        </ol>
+      </section>
+
+      <section id="posting">
+        <h2>3) การโพสต์ข้อความ / วิดีโอ</h2>
+        <h3>3.1 โพสต์ข้อความ</h3>
+        <ol>
+          <li>ไปที่แท็บ “Post ข้อความ” ในแผงควบคุม</li>
+          <li>กรอกข้อความ (หากเว้นว่างจะใช้ Default Message) ใส่ลิงก์ถ้ามี และเลือกเผยแพร่หรือไม่</li>
+          <li>กด “โพสต์ข้อความ” ผลลัพธ์จะปรากฏในฝั่ง “การแสดงผล”</li>
+        </ol>
+        <h3>3.2 โพสต์วิดีโอ</h3>
+        <ol>
+          <li>ไปที่แท็บ “Post VDO”</li>
+          <li>เลือกไฟล์วิดีโอจากเครื่อง หรือระบุเส้นทางไฟล์บนเซิร์ฟเวอร์</li>
+          <li>ใส่คำอธิบายถ้าต้องการ แล้วกด “โพสต์วิดีโอ”</li>
+        </ol>
+        <p class="muted">หมายเหตุ: บางเพจหรือบางไฟล์อาจใช้เวลาประมวลผลก่อนโพสต์เสร็จ ผลลัพธ์จะอัปเดตทาง API</p>
+      </section>
+
+      <section id="scheduler">
+        <h2>4) การตั้งเวลา (Scheduler)</h2>
+        <p>ใช้ตัวตั้งเวลาเพื่อให้ระบบโพสต์อัตโนมัติตามเวลาที่กำหนด รองรับ <code>cron</code> แบบ 5 ช่อง เช่น <code>0 9 * * *</code> (ทุกวัน 09:00)</p>
+        <h3>4.1 เปิดใช้งานและโหลดงาน</h3>
+        <ol>
+          <li>กด “เปิดใช้งาน” เพื่อเริ่ม Scheduler</li>
+          <li>กด “โหลดงานใหม่” เพื่อโหลดรายการงานจาก <code>settings.json</code></li>
+        </ol>
+        <h3>4.2 โครงสร้างตัวอย่างใน settings.json</h3>
+        <pre>{
+  "scheduler": {
+    "enabled": true,
+    "timezone": "Asia/Bangkok",
+    "jobs": [
+      {
+        "type": "text",
+        "run_cron": "0 9 * * *",
+        "message": "อรุณสวัสดิ์!",
+        "link": "https://example.com",
+        "published": true
+      },
+      {
+        "type": "video",
+        "run_cron": "30 10 * * 1",
+        "video_path": "/path/to/video.mp4",
+        "description": "แคมเปญประจำสัปดาห์"
+      }
+    ]
+  }
+}
+        </pre>
+        <p class="muted">ชนิดงานรองรับ: <code>text</code> และ <code>video</code> โดยระบบจะเรียก API เดียวกับปุ่มโพสต์</p>
+      </section>
+
+      <section id="troubleshooting">
+        <h2>5) ปัญหาที่พบบ่อย</h2>
+        <ul>
+          <li><strong>โทเค็นหมดอายุ:</strong> ให้สร้าง Short-Lived ใหม่ แล้วกดแปลงเป็น Long-Lived อีกครั้ง</li>
+          <li><strong>สิทธิ์ไม่พอ:</strong> ตรวจสอบว่ามีสิทธิ์เพจและการอนุมัติ Permission ตามที่ Facebook กำหนด</li>
+          <li><strong>โพสต์วิดีโอช้า:</strong> ไฟล์ใหญ่ใช้เวลาประมวลผลนาน ให้รอผลลัพธ์จาก API</li>
+          <li><strong>ไฟล์ล็อกไม่พบ:</strong> โฟลเดอร์ <code>logs</code> จะถูกสร้างอัตโนมัติเมื่อรันแอป (แก้แล้วในโค้ด)</li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
+

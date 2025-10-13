@@ -1,0 +1,18 @@
+{
+  "app_id": "1312726110016966",
+  "app_secret": "02d9bd268bada2a87e8755867990aae1",
+  "short_lived_user_token": "EAASp6t15lcYBPsPYaL9qX3IO4WoL280n1vpFEzkGxaUBhoFhZBQuCq6fIEa7CjY5gj4ATxeK7OiAnI9MgolkvDQ9PWvJzwEWrKHqZBQUDFFFjXzj69zCRzGEcvwDssGa4UDDcCeZCfkW7DUEZAsT8wxrvRTIpv9BiTAy6Cn2Va9ATUx1SuBZCdxZA2JcaBfYXYGqbDBzBoYGhlnTkG6cyOhA5nAUn7F7Vicj4x",
+  "long_lived_user_token": "EAASp6t15lcYBPgaJvvjcZBkpfg8xn6yJTXjdwOva9s8cOeNHRioyXOKaDvGF4T9345c0yC9daLO0ROfv8FLgxIWBzexlKjU6lnMDHZBHt6iyL791ZA9G6TZAu8FQXD31GlesufgoOpku7qmtNIKAzBaECXOFH6hTnDGTbjviEQSmaAk8os9ZCg2sIAgxD",
+  "page_id": "243709882391472",
+  "page_access_token": "EAASp6t15lcYBPt1LpqVTHNOeTyBkR1NzsucUG4N6TTcek9NxjjMOmi6jxDxLyDE3mJfQSxvdZAT33fEhikKWM3gNHZAj3ZBYdWQrhgZA8ICSW1KiqvZB9azmBHvxrHdg68cGFIO1YZCxzv3IoAjjUnsg9JJt8krttXzFjBU6sG4MunC7Dr1QOZCtwGUHdmoB8AqhbwZD",
+  "default_message": "Hello from smsthaigold auto poster!",
+  "post_defaults": {
+    "link": "",
+    "published": true
+  },
+  "scheduler": {
+    "enabled": false,
+    "timezone": "Asia/Bangkok",
+    "jobs": []
+  }
+}

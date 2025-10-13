@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <title>Auto Fanpage Flask – แดชบอร์ด</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="หน้าจอควบคุมโพสต์เพจ Facebook ด้วย Flask: ตั้งค่า โพสต์ข้อความ/วิดีโอ และตัวตั้งเวลา">
+  <style>
+    :root{
+      --bg:#f8f9fa;
+      --card:#ffffff;
+      --text:#111;
+      --muted:#666;
+      --border:#e5e7eb;
+      --accent:#3b82f6;
+      --accent-hover:#2563eb;
+      --success:#10b981;
+      --danger:#ef4444;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
+      --radius: 12px;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+    
+    .bar {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    h1 {
+      font-size: clamp(1.125rem, 3vw, 1.5rem);
+      font-weight: 600;
+    }
+    
+    .help-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      background: var(--card);
+      transition: all 0.2s;
+    }
+    
+    .help-link:hover {
+      background: var(--bg);
+      transform: translateY(-1px);
+    }
+    
+    /* Main Layout */
+    .layout {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    @media (min-width: 1024px) {
+      .layout {
+        grid-template-columns: 400px 1fr;
+        padding: 2rem 1.5rem;
+      }
+    }
+    
+    /* Panel */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    
+    .panel.left {
+      align-self: start;
+      position: sticky;
+      top: 80px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+    }
+    
+    @media (max-width: 1023px) {
+      .panel.left {
+        position: static;
+        max-height: none;
+      }
+    }
+    
+    .panel h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border);
+    }
+    
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      padding: 0.5rem;
+      background: var(--bg);
+      border-radius: 10px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .tabs::-webkit-scrollbar {
+      height: 4px;
+    }
+    
+    .tabs::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .tabs::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+    
+    .tab {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 0.625rem 1rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    
+    .tab:hover {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--accent);
+    }
+    
+    .tab.active {
+      background: var(--accent);
+      color: white;
+    }
+    
+    /* Tab Panes */
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .tab-pane.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    section h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+    
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      font-size: 0.875rem;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    input[type="file"] {
+      padding: 0.5rem;
+      cursor: pointer;
+    }
+    
+    /* Grid Layout for Settings */
+    .settings-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+    
+    @media (min-width: 768px) {
+      .settings-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    .settings-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    /* Actions/Buttons */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.25rem;
+    }
+    
+    button {
+      padding: 0.625rem 1.25rem;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    
+    button:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button.secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    
+    button.secondary:hover {
+      background: var(--bg);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    button.success {
+      background: var(--success);
+    }
+    
+    button.danger {
+      background: var(--danger);
+    }
+    
+    /* Hint Text */
+    .hint {
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      line-height: 1.4;
+    }
+    
+    code {
+      background: var(--bg);
+      padding: 0.125rem 0.375rem;
+      border-radius: 4px;
+      font-size: 0.8125rem;
+      font-family: 'Courier New', monospace;
+    }
+    
+    /* Results Section */
+    .results-grid {
+      display: grid;
+      gap: 1rem;
+    }
+    
+    @media (min-width: 768px) {
+      .results-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    .result-box {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      background: var(--bg);
+      overflow: hidden;
+    }
+    
+    .result-box h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow: auto;
+      margin: 0;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      max-height: 300px;
+      font-family: 'Courier New', monospace;
+    }
+    
+    pre::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    
+    pre::-webkit-scrollbar-track {
+      background: #0f172a;
+      border-radius: 3px;
+    }
+    
+    pre::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 3px;
+    }
+    
+    pre:empty::before {
+      content: 'รอผลลัพธ์...';
+      color: var(--muted);
+      font-style: italic;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 767px) {
+      .bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .help-link {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .actions {
+        width: 100%;
+      }
+      
+      button {
+        flex: 1;
+        min-width: 0;
+      }
+      
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      pre {
+        max-height: 200px;
+      }
+    }
+    
+    /* Utility Classes */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <h1>🚀 Auto Fanpage Flask – แดชบอร์ด</h1>
+      <a class="help-link" href="/help" title="คู่มือการใช้งาน">📚 คู่มือการใช้งาน</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT: Controls -->
+    <div class="panel left">
+      <h2>การควบคุม</h2>
+      <div class="tabs" role="tablist">
+        <button class="tab active" role="tab" aria-selected="true" data-tab="settings" onclick="setTab('settings')">⚙️ Settings</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="post_text" onclick="setTab('post_text')">📝 Post ข้อความ</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="post_video" onclick="setTab('post_video')">🎬 Post VDO</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="scheduler" onclick="setTab('scheduler')">⏰ ตั้งเวลา</button>
+      </div>
+
+      <section class="tab-pane active" data-pane="settings" aria-labelledby="sec-settings">
+        <h3 id="sec-settings">การตั้งค่า Facebook</h3>
+        <div class="settings-grid">
+          <div class="settings-section">
+            <div class="form-group">
+              <label for="app_id">App ID</label>
+              <input id="app_id" placeholder="ใส่ App ID">
+            </div>
+            <div class="form-group">
+              <label for="app_secret">App Secret</label>
+              <input id="app_secret" type="password" placeholder="ใส่ App Secret">
+            </div>
+            <div class="form-group">
+              <label for="short_token">Short-Lived User Token</label>
+              <textarea id="short_token" rows="3" placeholder="โทเค็นผู้ใช้แบบสั้น"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="long_token">Long-Lived User Token</label>
+              <textarea id="long_token" rows="3" placeholder="โทเค็นผู้ใช้แบบยาว"></textarea>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="form-group">
+              <label for="page_id">Page ID</label>
+              <input id="page_id" placeholder="ระบุ Page ID">
+            </div>
+            <div class="form-group">
+              <label for="page_token">Page Access Token</label>
+              <textarea id="page_token" rows="3" placeholder="โทเค็นเพจ"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="default_message">ข้อความเริ่มต้น (Default Message)</label>
+              <textarea id="default_message" rows="3" placeholder="เช่น สวัสดีจากบอท!"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="default_link">ลิงก์เริ่มต้น (Default Link)</label>
+              <input id="default_link" type="url" placeholder="https://...">
+            </div>
+            <div class="form-group">
+              <label for="default_published">เผยแพร่ทันที (Published)</label>
+              <select id="default_published">
+                <option value="true">true</option>
+                <option value="false">false</option>
+              </select>
+              <p class="hint">💡 แก้ไขไฟล์ <code>settings.json</code> โดยตรงก็ได้</p>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button onclick="saveSettings()">💾 บันทึกการตั้งค่า</button>
+          <button class="secondary" onclick="exchangeUserToken()">🔄 แลกเปลี่ยนโทเค็น</button>
+          <button class="secondary" onclick="loadPages()">📄 โหลดเพจ</button>
+          <button class="secondary" onclick="getPageToken()">🔑 รับโทเค็นเพจ</button>
+        </div>
+      </section>
+
+      <section class="tab-pane" data-pane="post_text" aria-labelledby="sec-text">
+        <h3 id="sec-text">โพสต์ข้อความ</h3>
+        <div class="form-group">
+          <label for="text_message">ข้อความ</label>
+          <textarea id="text_message" rows="4" placeholder="พิมพ์ข้อความ (ถ้าเว้นว่างจะใช้ Default Message)"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="text_link">ลิงก์ (ถ้ามี)</label>
+          <input id="text_link" type="url" placeholder="https://...">
+        </div>
+        <div class="form-group">
+          <label for="text_published">เผยแพร่</label>
+          <select id="text_published">
+            <option value="true">true</option>
+            <option value="false">false</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button onclick="postText()">📤 โพสต์ข้อความ</button>
+        </div>
+      </section>
+
+      <section class="tab-pane" data-pane="post_video" aria-labelledby="sec-video">
+        <h3 id="sec-video">โพสต์วิดีโอ</h3>
+        <div class="form-group">
+          <label for="video_desc">คำอธิบาย</label>
+          <textarea id="video_desc" rows="3" placeholder="คำอธิบายวิดีโอ"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="video_file">ไฟล์วิดีโอ</label>
+          <input id="video_file" type="file" accept="video/*">
+        </div>
+        <div class="form-group">
+          <label for="video_path">หรือ ระบุเส้นทางไฟล์บนเซิร์ฟเวอร์</label>
+          <input id="video_path" placeholder="เช่น C:\videos\clip.mp4 หรือ /path/video.mp4">
+          <p class="hint">💡 ใช้เส้นทางไฟล์บนเซิร์ฟเวอร์สำหรับไฟล์ขนาดใหญ่</p>
+        </div>
+        <div class="actions">
+          <button onclick="postVideo()">🎥 โพสต์วิดีโอ</button>
+        </div>
+      </section>
+
+      <section class="tab-pane" data-pane="scheduler" aria-labelledby="sec-sched">
+        <h3 id="sec-sched">ตัวตั้งเวลา (Scheduler)</h3>
+        <p class="hint" style="margin-bottom: 1rem;">⚡ จัดการระบบโพสต์อัตโนมัติตามเวลาที่กำหนด</p>
+        <div class="actions">
+          <button class="success" onclick="toggleScheduler(true)">✅ เปิดใช้งาน</button>
+          <button class="danger" onclick="toggleScheduler(false)">❌ ปิดใช้งาน</button>
+          <button class="secondary" onclick="reloadJobs()">🔄 โหลดงานใหม่</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="panel">
+      <h2>📊 การแสดงผล</h2>
+      <div class="results-grid">
+        <div class="result-box">
+          <h4>⚙️ ผลลัพธ์การตั้งค่า/โทเค็น</h4>
+          <pre id="out_settings" aria-live="polite"></pre>
+        </div>
+        <div class="result-box">
+          <h4>📝 ผลลัพธ์โพสต์ข้อความ</h4>
+          <pre id="out_text" aria-live="polite"></pre>
+        </div>
+        <div class="result-box">
+          <h4>🎬 ผลลัพธ์โพสต์วิดีโอ</h4>
+          <pre id="out_video" aria-live="polite"></pre>
+        </div>
+        <div class="result-box">
+          <h4>⏰ ผลลัพธ์ตัวตั้งเวลา</h4>
+          <pre id="out_sched" aria-live="polite"></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+function setTab(name){
+  document.querySelectorAll('.tab').forEach(b=>{
+    const active = b.getAttribute('data-tab')===name;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', active? 'true':'false');
+  });
+  document.querySelectorAll('.tab-pane').forEach(p=>{
+    p.classList.toggle('active', p.getAttribute('data-pane')===name);
+  });
+}
+
+async function loadSettings(){
+  const r = await fetch('/api/settings');
+  const s = await r.json();
+  app_id.value = s.app_id || '';
+  app_secret.value = s.app_secret || '';
+  short_token.value = s.short_lived_user_token || '';
+  long_token.value = s.long_lived_user_token || '';
+  page_id.value = s.page_id || '';
+  page_token.value = s.page_access_token || '';
+  default_message.value = s.default_message || '';
+  default_link.value = (s.post_defaults && s.post_defaults.link) || '';
+  default_published.value = (s.post_defaults && s.post_defaults.published) ? 'true' : 'false';
+  out_settings.textContent = JSON.stringify(s, null, 2);
+}
+async function saveSettings(){
+  const payload = {
+    app_id: app_id.value, app_secret: app_secret.value,
+    short_lived_user_token: short_token.value,
+    long_lived_user_token: long_token.value,
+    page_id: page_id.value,
+    page_access_token: page_token.value,
+    default_message: default_message.value,
+    post_defaults: { link: default_link.value, published: default_published.value === 'true' }
+  };
+  const r = await fetch('/api/settings', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+  out_settings.textContent = JSON.stringify(await r.json(), null, 2);
+}
+async function exchangeUserToken(){
+  const r = await fetch('/api/exchange_user_token', {method:'POST'});
+  out_settings.textContent = JSON.stringify(await r.json(), null, 2);
+  loadSettings();
+}
+async function loadPages(){
+  const r = await fetch('/api/pages');
+  out_settings.textContent = JSON.stringify(await r.json(), null, 2);
+}
+async function getPageToken(){
+  const r = await fetch('/api/page_token', {method:'POST'});
+  out_settings.textContent = JSON.stringify(await r.json(), null, 2);
+  loadSettings();
+}
+async function postText(){
+  const payload = {
+    message: text_message.value || default_message.value,
+    link: text_link.value || default_link.value,
+    published: text_published.value === 'true'
+  };
+  const r = await fetch('/api/post_text', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+  out_text.textContent = JSON.stringify(await r.json(), null, 2);
+}
+async function postVideo(){
+  const fd = new FormData();
+  fd.append('description', video_desc.value || '');
+  if(video_file.files[0]) fd.append('file', video_file.files[0]);
+  if(video_path.value) fd.append('video_path', video_path.value);
+  const r = await fetch('/api/post_video', {method:'POST', body: fd});
+  out_video.textContent = JSON.stringify(await r.json(), null, 2);
+}
+async function toggleScheduler(enabled){
+  const r = await fetch('/api/scheduler/toggle', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({enabled})});
+  out_sched.textContent = JSON.stringify(await r.json(), null, 2);
+}
+async function reloadJobs(){
+  const r = await fetch('/api/scheduler/reload', {method:'POST'});
+  out_sched.textContent = JSON.stringify(await r.json(), null, 2);
+}
+// default tab
+setTab('settings');
+loadSettings();
+  </script>
+</body>
+</html>
